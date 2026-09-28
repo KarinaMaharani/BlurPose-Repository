@@ -1,0 +1,193 @@
+{
+  "video": "friends.mp4",
+  "frames": 120,
+  "resolution": [
+    1280,
+    720
+  ],
+  "fps": 23.976,
+  "config": {
+    "blur_method": "blur",
+    "mode": "all",
+    "face_file": null,
+    "threshold": 0.45,
+    "face_backend": "yunet",
+    "model_pack": "buffalo_l",
+    "det_size": 640,
+    "box_pad": 0.25,
+    "miss_hold": 3,
+    "pose_backend": "torchvision",
+    "pose_score_thr": 0.5,
+    "kpt_vis_thr": 0.2,
+    "alphapose_root": "c:\\.FILES\\..MY STUFF\\..KARIN\\.UI\\.SEM 6\\skripsi\\..RA-Pak-Edy\\vendor\\AlphaPose",
+    "alphapose_cfg": "configs/halpe_26/resnet/256x192_res50_lr1e-3_1x.yaml",
+    "alphapose_ckpt": "pretrained_models/halpe26_fast_res50_256x192.pth",
+    "alphapose_python": "c:\\Users\\Karina M\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "pck_thresholds": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "max_frames": 120,
+    "draw_kpt_thr": 0.35,
+    "gif_width": 800,
+    "gif_fps": 8,
+    "gif_max_frames": 40,
+    "gif_colors": 128
+  },
+  "detections": {
+    "matched": 633,
+    "lost": 164,
+    "spurious": 358,
+    "lost_rate": 0.205771643663739
+  },
+  "pck": {
+    "@0.05": 0.5858571008526904,
+    "@0.10": 0.6598059394295795,
+    "@0.20": 0.7509556012937372
+  },
+  "mean_oks": 0.5664587430250372,
+  "mean_norm_displacement": {
+    "all": 0.12247338145971298,
+    "face": 0.15513288974761963,
+    "body": 0.10291147232055664
+  },
+  "per_keypoint": {
+    "nose": {
+      "group": "face",
+      "mean_disp": 0.17808762192726135,
+      "median_disp": 0.13143134117126465,
+      "pck_005": 0.23185840707964603,
+      "conf_before": 0.91643226146698,
+      "conf_after": 0.7199308276176453
+    },
+    "left_eye": {
+      "group": "face",
+      "mean_disp": 0.20601843297481537,
+      "median_disp": 0.12963548302650452,
+      "pck_005": 0.3691683569979716,
+      "conf_before": 0.999548614025116,
+      "conf_after": 0.7975118160247803
+    },
+    "right_eye": {
+      "group": "face",
+      "mean_disp": 0.17737850546836853,
+      "median_disp": 0.12272950261831284,
+      "pck_005": 0.35496957403651114,
+      "conf_before": 0.9858274459838867,
+      "conf_after": 0.7719963192939758
+    },
+    "left_ear": {
+      "group": "face",
+      "mean_disp": 0.14683116972446442,
+      "median_disp": 0.05328485742211342,
+      "pck_005": 0.49404761904761907,
+      "conf_before": 0.9810990691184998,
+      "conf_after": 0.8951622843742371
+    },
+    "right_ear": {
+      "group": "face",
+      "mean_disp": 0.06418149918317795,
+      "median_disp": 0.022808000445365906,
+      "pck_005": 0.6997971602434077,
+      "conf_before": 0.9979660511016846,
+      "conf_after": 0.9468936324119568
+    },
+    "left_shoulder": {
+      "group": "body",
+      "mean_disp": 0.1498691588640213,
+      "median_disp": 0.03194873034954071,
+      "pck_005": 0.6125760649087221,
+      "conf_before": 0.9614890217781067,
+      "conf_after": 0.8351876139640808
+    },
+    "right_shoulder": {
+      "group": "body",
+      "mean_disp": 0.08152303099632263,
+      "median_disp": 0.010785054415464401,
+      "pck_005": 0.6977687626774848,
+      "conf_before": 0.9650028347969055,
+      "conf_after": 0.873191773891449
+    },
+    "left_elbow": {
+      "group": "body",
+      "mean_disp": 0.1309695541858673,
+      "median_disp": 0.02276359498500824,
+      "pck_005": 0.6285140562248996,
+      "conf_before": 0.7563307881355286,
+      "conf_after": 0.6747069358825684
+    },
+    "right_elbow": {
+      "group": "body",
+      "mean_disp": 0.12427788972854614,
+      "median_disp": 0.016445130109786987,
+      "pck_005": 0.6753554502369669,
+      "conf_before": 0.8127301335334778,
+      "conf_after": 0.709847092628479
+    },
+    "left_wrist": {
+      "group": "body",
+      "mean_disp": 0.10615145415067673,
+      "median_disp": 0.01029299758374691,
+      "pck_005": 0.7127272727272728,
+      "conf_before": 0.8947309851646423,
+      "conf_after": 0.9077128171920776
+    },
+    "right_wrist": {
+      "group": "body",
+      "mean_disp": 0.12344694137573242,
+      "median_disp": 0.017642535269260406,
+      "pck_005": 0.6586270871985158,
+      "conf_before": 0.8075842261314392,
+      "conf_after": 0.8630659580230713
+    },
+    "left_hip": {
+      "group": "body",
+      "mean_disp": 0.0845516249537468,
+      "median_disp": 0.04728129506111145,
+      "pck_005": 0.5308641975308642,
+      "conf_before": 0.4682409465312958,
+      "conf_after": 0.4403493106365204
+    },
+    "right_hip": {
+      "group": "body",
+      "mean_disp": 0.12737007439136505,
+      "median_disp": 0.023277074098587036,
+      "pck_005": 0.5536912751677853,
+      "conf_before": 0.564314067363739,
+      "conf_after": 0.5188460946083069
+    },
+    "left_knee": {
+      "group": "body",
+      "mean_disp": 0.04309052973985672,
+      "median_disp": 0.017227163538336754,
+      "pck_005": 0.6666666666666666,
+      "conf_before": 0.3139841854572296,
+      "conf_after": 0.28906747698783875
+    },
+    "right_knee": {
+      "group": "body",
+      "mean_disp": 0.008162450045347214,
+      "median_disp": 0.004134774208068848,
+      "pck_005": 0.986013986013986,
+      "conf_before": 0.7682672142982483,
+      "conf_after": 0.7469746470451355
+    },
+    "left_ankle": {
+      "group": "body",
+      "mean_disp": 0.0360722690820694,
+      "median_disp": 0.006532767787575722,
+      "pck_005": 0.9337748344370861,
+      "conf_before": 0.8873115181922913,
+      "conf_after": 0.9261640310287476
+    },
+    "right_ankle": {
+      "group": "body",
+      "mean_disp": 0.01604495756328106,
+      "median_disp": 0.011163726449012756,
+      "pck_005": 0.9759615384615384,
+      "conf_before": 0.7008272409439087,
+      "conf_after": 0.8495743274688721
+    }
+  }
+}

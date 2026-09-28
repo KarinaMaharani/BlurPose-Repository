@@ -1,0 +1,223 @@
+{
+  "video": "Jim Lahey Falls Down - JackKehoe (480p).mp4",
+  "frames": 120,
+  "resolution": [
+    640,
+    480
+  ],
+  "fps": 29.97002997002997,
+  "config": {
+    "blur_method": "blur",
+    "mode": "all",
+    "face_file": null,
+    "threshold": 0.45,
+    "face_backend": "yunet",
+    "model_pack": "buffalo_l",
+    "det_size": 640,
+    "box_pad": 0.25,
+    "miss_hold": 3,
+    "pose_backend": "torchvision",
+    "pose_score_thr": 0.5,
+    "kpt_vis_thr": 0.2,
+    "alphapose_root": "c:\\.FILES\\..MY STUFF\\..KARIN\\.UI\\.SEM 6\\skripsi\\..RA-Pak-Edy\\vendor\\AlphaPose",
+    "alphapose_cfg": "configs/halpe_26/resnet/256x192_res50_lr1e-3_1x.yaml",
+    "alphapose_ckpt": "pretrained_models/halpe26_fast_res50_256x192.pth",
+    "alphapose_python": "c:\\Users\\Karina M\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "pck_thresholds": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "max_frames": 120,
+    "draw_kpt_thr": 0.35,
+    "gif_width": 800,
+    "gif_fps": 8,
+    "gif_max_frames": 40,
+    "gif_colors": 128
+  },
+  "detections": {
+    "matched": 258,
+    "lost": 18,
+    "spurious": 40,
+    "lost_rate": 0.06521739130434782
+  },
+  "pck": {
+    "@0.05": 0.7477003942181341,
+    "@0.10": 0.8402102496714849,
+    "@0.20": 0.9187910643889619
+  },
+  "mean_oks": 0.6585846079513431,
+  "mean_norm_displacement": {
+    "all": 0.05374196544289589,
+    "face": 0.09042441099882126,
+    "body": 0.035645488649606705
+  },
+  "per_group": {
+    "face": {
+      "n_samples": 1257,
+      "mean_disp": 0.09042441099882126,
+      "median_disp": 0.04501684010028839,
+      "pck_005": 0.5417661097852029,
+      "mean_conf_delta": -0.12355083227157593
+    },
+    "torso": {
+      "n_samples": 971,
+      "mean_disp": 0.026700682938098907,
+      "median_disp": 0.011840719729661942,
+      "pck_005": 0.8640576725025747,
+      "mean_conf_delta": -0.0664711445569992
+    },
+    "arms": {
+      "n_samples": 985,
+      "mean_disp": 0.040100570768117905,
+      "median_disp": 0.0060529462061822414,
+      "pck_005": 0.8416243654822335,
+      "mean_conf_delta": -0.03041476011276245
+    },
+    "legs": {
+      "n_samples": 592,
+      "mean_disp": 0.042904190719127655,
+      "median_disp": 0.0096506979316473,
+      "pck_005": 0.8378378378378378,
+      "mean_conf_delta": -0.015096098184585571
+    }
+  },
+  "per_keypoint": {
+    "nose": {
+      "group": "face",
+      "mean_disp": 0.11099763959646225,
+      "median_disp": 0.060519468039274216,
+      "pck_005": 0.4578313253012048,
+      "conf_before": 0.9839005470275879,
+      "conf_after": 0.8104252815246582
+    },
+    "left_eye": {
+      "group": "face",
+      "mean_disp": 0.1112716868519783,
+      "median_disp": 0.048168718814849854,
+      "pck_005": 0.5078740157480315,
+      "conf_before": 0.964729368686676,
+      "conf_after": 0.7674353718757629
+    },
+    "right_eye": {
+      "group": "face",
+      "mean_disp": 0.10346145182847977,
+      "median_disp": 0.05309894308447838,
+      "pck_005": 0.4980237154150198,
+      "conf_before": 0.9709249138832092,
+      "conf_after": 0.872815728187561
+    },
+    "left_ear": {
+      "group": "face",
+      "mean_disp": 0.06194351240992546,
+      "median_disp": 0.032913949340581894,
+      "pck_005": 0.678714859437751,
+      "conf_before": 0.9907693862915039,
+      "conf_after": 0.897583544254303
+    },
+    "right_ear": {
+      "group": "face",
+      "mean_disp": 0.06413641571998596,
+      "median_disp": 0.038030367344617844,
+      "pck_005": 0.5674603174603174,
+      "conf_before": 0.9756891131401062,
+      "conf_after": 0.9199992418289185
+    },
+    "left_shoulder": {
+      "group": "torso",
+      "mean_disp": 0.028254900127649307,
+      "median_disp": 0.01116479467600584,
+      "pck_005": 0.8313725490196079,
+      "conf_before": 0.9625694155693054,
+      "conf_after": 0.8971562385559082
+    },
+    "right_shoulder": {
+      "group": "torso",
+      "mean_disp": 0.029160531237721443,
+      "median_disp": 0.010665873065590858,
+      "pck_005": 0.8253968253968254,
+      "conf_before": 0.9461333751678467,
+      "conf_after": 0.8782313466072083
+    },
+    "left_elbow": {
+      "group": "arms",
+      "mean_disp": 0.053399957716464996,
+      "median_disp": 0.01257309876382351,
+      "pck_005": 0.7478991596638656,
+      "conf_before": 0.9246150851249695,
+      "conf_after": 0.8508939146995544
+    },
+    "right_elbow": {
+      "group": "arms",
+      "mean_disp": 0.023452293127775192,
+      "median_disp": 0.006418952252715826,
+      "pck_005": 0.9004149377593361,
+      "conf_before": 0.9629650712013245,
+      "conf_after": 0.9433054327964783
+    },
+    "left_wrist": {
+      "group": "arms",
+      "mean_disp": 0.06896591186523438,
+      "median_disp": 0.005976870656013489,
+      "pck_005": 0.7637795275590551,
+      "conf_before": 0.9055662155151367,
+      "conf_after": 0.8846176266670227
+    },
+    "right_wrist": {
+      "group": "arms",
+      "mean_disp": 0.014367173425853252,
+      "median_disp": 0.0038040687795728445,
+      "pck_005": 0.9523809523809523,
+      "conf_before": 0.9717215895652771,
+      "conf_after": 0.9643919467926025
+    },
+    "left_hip": {
+      "group": "torso",
+      "mean_disp": 0.03036797232925892,
+      "median_disp": 0.016405662521719933,
+      "pck_005": 0.8638297872340426,
+      "conf_before": 0.9357348680496216,
+      "conf_after": 0.8577935695648193
+    },
+    "right_hip": {
+      "group": "torso",
+      "mean_disp": 0.018499715253710747,
+      "median_disp": 0.01126081682741642,
+      "pck_005": 0.9432314410480349,
+      "conf_before": 0.956787109375,
+      "conf_after": 0.9021590352058411
+    },
+    "left_knee": {
+      "group": "legs",
+      "mean_disp": 0.05047272518277168,
+      "median_disp": 0.009523362852633,
+      "pck_005": 0.8375634517766497,
+      "conf_before": 0.8137950897216797,
+      "conf_after": 0.738036036491394
+    },
+    "right_knee": {
+      "group": "legs",
+      "mean_disp": 0.04020022600889206,
+      "median_disp": 0.010987428948283195,
+      "pck_005": 0.8483412322274881,
+      "conf_before": 0.8265634179115295,
+      "conf_after": 0.737403154373169
+    },
+    "left_ankle": {
+      "group": "legs",
+      "mean_disp": 0.030673673376441002,
+      "median_disp": 0.008470646105706692,
+      "pck_005": 0.8785046728971962,
+      "conf_before": 0.5817204117774963,
+      "conf_after": 0.6047424077987671
+    },
+    "right_ankle": {
+      "group": "legs",
+      "mean_disp": 0.047945741564035416,
+      "median_disp": 0.009038473479449749,
+      "pck_005": 0.7532467532467533,
+      "conf_before": 0.5935912728309631,
+      "conf_after": 0.6751042008399963
+    }
+  }
+}
