@@ -1,0 +1,18 @@
+# blurpose — install with:  pip install -r requirements.txt
+#
+# On the GPU server, if torch.cuda.is_available() is False, install torch
+# separately with the wheel matching the driver shown by nvidia-smi, e.g.:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
+torch>=2.0
+torchvision>=0.15
+opencv-python>=4.8
+numpy>=1.24
+matplotlib>=3.7
+pillow>=10.0
+tqdm>=4.65
+
+# Optional — only for --face-backend insightface (--mode target/exclude).
+# Needs a C++ build toolchain; skip unless you need per-person censoring.
+# insightface>=0.7.3
+# onnxruntime-gpu>=1.16
