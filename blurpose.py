@@ -41,6 +41,14 @@ import matplotlib.pyplot as plt
 
 VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
 
+# Turn sideways footage upright on the fly, so you do not have to pre-encode a
+# rotated copy and upload it. Applied to every frame before anything else sees
+# it, so pose, censoring and all renders stay consistent.
+ROTATIONS = {"none": None,
+             "cw": cv2.ROTATE_90_CLOCKWISE,
+             "ccw": cv2.ROTATE_90_COUNTERCLOCKWISE,
+             "180": cv2.ROTATE_180}
+
 # --------------------------------------------------------------- keypoints --
 COCO17 = ["nose", "left_eye", "right_eye", "left_ear", "right_ear",
           "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
@@ -127,7 +135,7 @@ def video_meta(path, warn=True):
     return w, h, n, fps
 
 
-def frame_reader(path, limit=None):
+def frame_reader(path, limit=None, rotation=None):
     cap = cv2.VideoCapture(str(path))
     try:
         i = 0
@@ -135,7 +143,7 @@ def frame_reader(path, limit=None):
             ok, frame = cap.read()
             if not ok:
                 break
-            yield frame
+            yield cv2.rotate(frame, rotation) if rotation is not None else frame
             i += 1
     finally:
         cap.release()
@@ -643,13 +651,18 @@ def print_report(R, schema):
 def process_video(video, args, schema, pose, detector):
     stem = video.stem
     vw_, vh_, vn, fps = video_meta(video)
+    rotation = ROTATIONS[args.rotate]
+    if args.rotate in ("cw", "ccw"):
+        vw_, vh_ = vh_, vw_          # a quarter turn swaps the frame dimensions
     limit = args.max_frames if args.max_frames > 0 else None
-    run_dir = Path(args.output) / f"{stem}__{args.method}__torchvision"
+    suffix = f"__rot{args.rotate}" if args.rotate != "none" else ""
+    run_dir = Path(args.output) / f"{stem}{suffix}__{args.method}__torchvision"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     est_total = min(vn, limit) if (vn and limit) else (limit or vn or 0)
-    print(f"\n{'='*70}\n{video.name}  {vw_}x{vh_} @ {fps:g} fps  "
-          f"-> {est_total or 'all'} frames\n{'='*70}", flush=True)
+    print(f"\n{'='*70}\n{video.name}  {vw_}x{vh_} @ {fps:g} fps"
+          + (f"  [rotated {args.rotate}]" if rotation is not None else "")
+          + f"  -> {est_total or 'all'} frames\n{'='*70}", flush=True)
 
     writers = {}
     if args.videos != "none":
@@ -671,12 +684,17 @@ def process_video(video, args, schema, pose, detector):
 
     M = Metrics(schema, args.vis_thr, tuple(args.pck))
     gif_every = max(1, (est_total or 1) // max(1, args.gif_frames))
-    gif_frames, n_hits, n_held, held = [], 0, 0, []
+    still_every = max(1, (est_total or 1) // 4)
+    gif_frames, stills, n_hits, n_held, held = [], [], 0, 0, []
+    # Keeping every pose for the JSON/npy exports costs memory on a long clip,
+    # so only hold them when those exports were actually asked for.
+    keep_poses = args.export_json or args.export_npy
+    pose_log = {"before": [], "after": []} if keep_poses else None
     t = 0
     t0 = time.time()
 
     try:
-        for chunk in chunked(frame_reader(video, limit), args.batch):
+        for chunk in chunked(frame_reader(video, limit, rotation), args.batch):
             before = pose(chunk)
             censored = []
             for frame in chunk:
@@ -699,6 +717,9 @@ def process_video(video, args, schema, pose, detector):
 
             for i, (orig, cen) in enumerate(zip(chunk, censored)):
                 pairs = M.add(t, before[i], after[i])
+                if pose_log is not None:
+                    pose_log["before"].append(before[i])
+                    pose_log["after"].append(after[i])
                 for run, people in (("before", before[i]), ("after", after[i])):
                     for pid, p in enumerate(people):
                         for k in range(schema.K):
@@ -728,6 +749,8 @@ def process_video(video, args, schema, pose, detector):
                             interpolation=cv2.INTER_AREA)
                         draw_legend(small, schema, show_moved=True)
                         gif_frames.append(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+                    if t % still_every == 0 and len(stills) < 4:
+                        stills.append((t, combo.copy()))
                 t += 1
 
             if t % max(args.batch, args.progress) < args.batch:
@@ -755,9 +778,46 @@ def process_video(video, args, schema, pose, detector):
                     args.gif_fps, args.gif_colors)
     plot_report(R, schema, stem, args.method, "torchvision", run_dir)
 
+    # sample stills — easier to read closely than the GIF
+    if stills:
+        fig, axes = plt.subplots(len(stills), 1,
+                                 figsize=(14, 14 * vh_ / (vw_ * 2) * len(stills)))
+        for a, (ft, im) in zip(np.atleast_1d(axes), stills):
+            a.imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB)); a.axis("off")
+            a.set_title(f"frame {ft}", fontsize=8)
+        plt.tight_layout()
+        plt.savefig(run_dir / f"{stem}_{args.method}_stills.png", dpi=110,
+                    bbox_inches="tight")
+        plt.close(fig)
+
+    # optional heavier keypoint exports (CSV is always written, streaming)
+    if pose_log is not None:
+        if args.export_json:
+            doc = {"video": video.name,
+                   "schema": {"keypoints": schema.names,
+                              "groups": [schema.group_of[k] for k in range(schema.K)],
+                              "skeleton": [[int(i), int(j)] for (i, j), _ in schema.bones],
+                              "keypoint_set": schema.name,
+                              "rotation": args.rotate,
+                              "coords": "pixels in the (rotated) frame",
+                              "kpts_layout": "[x, y, score] per keypoint, in 'keypoints' order"},
+                   "runs": {run: [[{"person": pid,
+                                    "box": [round(float(v), 2) for v in q["box"]],
+                                    "score": round(float(q["score"]), 4),
+                                    "kpts": [[round(float(x), 2), round(float(y), 2),
+                                              round(float(s), 4)] for x, y, s in q["kpts"]]}
+                                   for pid, q in enumerate(people)]
+                                  for people in frames]
+                            for run, frames in pose_log.items()}}
+            (run_dir / "keypoints.json").write_text(json.dumps(doc), encoding="utf-8")
+        if args.export_npy:
+            for run, frames in pose_log.items():
+                np.save(run_dir / f"keypoints_{run}.npy",
+                        np.array(frames, dtype=object), allow_pickle=True)
+
     summary = {
         "video": video.name, "frames": t, "resolution": [vw_, vh_], "fps": fps,
-        "method": args.method, "keypoint_set": schema.name,
+        "method": args.method, "keypoint_set": schema.name, "rotate": args.rotate,
         "keypoints": schema.names, "scored_groups": list(schema.score_groups),
         "face_detections": n_hits, "carried_over_boxes": n_held,
         "detections": {"matched": R["matched"], "lost": R["lost"],
@@ -811,6 +871,17 @@ def main():
     ap.add_argument("--gif-fps", type=int, default=8)
     ap.add_argument("--gif-colors", type=int, default=128)
     ap.add_argument("--progress", type=int, default=100, help="print every N frames")
+    ap.add_argument("--rotate", default="none", choices=list(ROTATIONS),
+                    help="turn every frame before processing; 'cw' is 90 to the "
+                         "right — use it for the sideways cam clips")
+    ap.add_argument("--only", nargs="+", default=None, metavar="TEXT",
+                    help="process only videos whose filename contains any of these")
+    ap.add_argument("--skip", nargs="+", default=None, metavar="TEXT",
+                    help="skip videos whose filename contains any of these")
+    ap.add_argument("--export-json", action="store_true",
+                    help="also write keypoints.json (large on long clips)")
+    ap.add_argument("--export-npy", action="store_true",
+                    help="also write keypoints_{before,after}.npy")
     args = ap.parse_args()
 
     in_dir, out_dir = Path(args.input), Path(args.output)
@@ -820,9 +891,21 @@ def main():
 
     if not in_dir.is_dir():
         raise SystemExit(f"input folder not found: {in_dir.resolve()}")
-    videos = sorted(p for p in in_dir.iterdir() if p.suffix.lower() in VIDEO_EXTS)
-    if not videos:
+    found = sorted(p for p in in_dir.iterdir() if p.suffix.lower() in VIDEO_EXTS)
+    if not found:
         raise SystemExit(f"no videos in {in_dir.resolve()}")
+
+    # The script's equivalent of the notebook's checklist.
+    def selected(p):
+        if args.only and not any(s.lower() in p.name.lower() for s in args.only):
+            return False
+        if args.skip and any(s.lower() in p.name.lower() for s in args.skip):
+            return False
+        return True
+
+    videos = [p for p in found if selected(p)]
+    if not videos:
+        raise SystemExit("--only / --skip excluded every video")
 
     schema = Schema(args.keypoints)
     print(f"blurpose | method={args.method} | {schema.name} -> {schema.K} joints: "
@@ -833,10 +916,16 @@ def main():
     print(f"device: {pose.device}")
     detector = FaceDetector(args.face_backend, work)
 
-    print(f"\n{len(videos)} video(s) in {in_dir.resolve()}:")
-    for p in videos:
-        w, h, n, fps = video_meta(p)
-        print(f"  {p.name[:48]:<50} {w}x{h} {fps:6.2f}fps {n or '?':>8} frames")
+    print(f"\n{len(found)} video(s) in {in_dir.resolve()}, {len(videos)} selected:")
+    for p in found:
+        on = p in videos
+        w, h, n, fps = video_meta(p, warn=on)
+        if args.rotate in ("cw", "ccw"):
+            w, h = h, w
+        print(f"  [{'x' if on else ' '}] {p.name[:46]:<48} {w}x{h} {fps:6.2f}fps "
+              f"{n or '?':>8} frames" + ("" if on else "   (skipped)"))
+    if args.rotate != "none":
+        print(f"  rotation: {args.rotate} (applied to every frame before processing)")
 
     summaries = []
     started = time.time()
