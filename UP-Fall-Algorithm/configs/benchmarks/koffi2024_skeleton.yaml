@@ -1,0 +1,13 @@
+# 3D-skeleton impact benchmark (Koffi et al. 2024, the 3D_skeletons-UP-Fall-Dataset repo).
+# ML on single frames (99 coords for MediaPipe), DL on frame sequences.
+skeleton:
+  label: class            # the UP-Fall skeleton release already has impact labels per frame
+  split: frames
+  test_size: 0.2
+  rounds: 5
+  ml_models: [SVM, MLP, RF, KNN, NB, SGD]
+  dl_models: [LSTM, BiLSTM, CNN, STGCN]
+  seq_len: 30
+  seq_stride: 5
+  seq_label: last
+  epochs: 30

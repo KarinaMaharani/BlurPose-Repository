@@ -1,0 +1,36 @@
+# RA-Pak-Edy dataset: 3 phone IMUs (waist, chest, right thigh, ~100 Hz acc + gyro) + 4 webcams.
+# Unzip every session export into data/ra_pak_edy/ (one folder per session, any names):
+#   data/ra_pak_edy/francis_sesi_sore/{cameras.json, videos/, data/}
+#   data/ra_pak_edy/Pak_Edy_Sesi_Sore_1790326162007b/...
+dataset:
+  adapter: imu_session
+  name: ra_pak_edy
+  root: data/ra_pak_edy
+  roles: [waist, chest, thigh_right]
+  idle_label: 0                # label between activities
+  keep_idle: false             # true = idle segments become recordings of class 0
+  segment_padding_s: 0         # >0 adds idle context around every activity
+  drop_held_rows: true         # drop sample_kind != 0 rows (held / placeholder samples)
+  subject_from: manifest       # subject name from data/manifest.json ("francis"), or "folder"
+  cameras: [cam1, cam2, cam3, cam4]
+  camera_rotate: {cam4: cw}    # cam4 was filmed sideways
+  video_fps: 18                # decode rate for optical flow / CNN (UP-Fall cameras ran at ~18 fps)
+
+  # >>> FILL IN from your protocol sheet. Run `inspect` to see per-label durations and
+  # >>> acceleration peaks (falls typically peak > 2-3 g).
+  fall_classes: []             # e.g. [1, 2, 3, 4, 5]
+  classes: {}                  # optional names, e.g. {1: "fall forward", 6: "walking", ...}
+  label_to_activity: {}        # optional: merge raw labels, e.g. {1: 1, 2: 1, 3: 1} if 1-3 are trials of one fall
+  skip_labels: []              # labels to ignore entirely
+
+experiments:
+  IMU: [IMU]                   # all three phones
+  waist: [waist]
+  chest: [chest]
+  thigh: [thigh_right]
+  waist+chest: [waist, chest]
+  CAM: [CAM]                   # optical flow of all cameras (needs extract-flow)
+  cam1: ["cam1_flow"]
+  IMU+CAM: [IMU, CAM]
+  SKELETON: [SKELETON]         # needs extract-pose
+  IMU+SKELETON: [IMU, SKELETON]

@@ -1,0 +1,17 @@
+# Stricter variant for reporting next to the paper protocol: no window of a test trial or
+# test subject is ever seen in training, and feature selection only sees training data.
+# Use protocol: loso once you have >= 2 subjects.
+arc:
+  windows: [1, 2, 3]
+  overlap: 0.5
+  resample_hz: 18
+  tasks: [multiclass, binary]
+selection:
+  scope: per_split
+  curve_step: 2
+preprocessing:
+  scaler: standard
+evaluation:
+  protocol: group_holdout     # or loso
+  rounds: 10
+  test_size: 0.3

@@ -1,0 +1,27 @@
+# UR Fall Detection Dataset — https://fenix.ur.edu.pl/mkepski/ds/uf.html
+# python -m upfall_bench download -d configs/datasets/urfall.yaml   (~110 MB: CSVs + cam0 videos)
+dataset:
+  adapter: urfall
+  name: urfall
+  root: data/urfall
+  cameras: [cam0]              # cam1 (ceiling) exists for falls only, so it is off by default
+  rgb_crop: [320, 0, 640, 240] # the mp4 is depth|RGB side by side; keep the RGB half
+  download:
+    cameras: [cam0]
+    rgb_zip: false             # true also fetches the PNG zips (~4 GB), not needed
+  # classes / fall_classes: defaults in upfall_bench/datasets/urfall.py
+  #   1 upright, 2 falling, 3 lying after fall, 4 lying down (ADL), 5 lying (ADL); fall = [2]
+  # fall_classes: [2, 3]       # uncomment to count "on the floor after a fall" as fall too
+
+# Modality combinations, the UR Fall counterpart of the paper's 7 experiments.
+#   IMU   = the waist accelerometer (Ax, Ay, Az, SV_total) — no gyroscope in UR Fall
+#   DEPTH = the 8 per-frame depth-silhouette features shipped with the dataset
+#   CAM   = optical flow from the RGB video (needs `extract-flow` first)
+experiments:
+  IMU: [IMU]
+  DEPTH: [DEPTH]
+  CAM: [CAM]
+  IMU+DEPTH: [IMU, DEPTH]
+  IMU+CAM: [IMU, CAM]
+  DEPTH+CAM: [DEPTH, CAM]
+  IMU+DEPTH+CAM: [IMU, DEPTH, CAM]

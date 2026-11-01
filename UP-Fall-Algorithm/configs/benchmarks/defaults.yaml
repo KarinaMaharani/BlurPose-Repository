@@ -1,0 +1,99 @@
+# Base values for every option. Loaded first; the benchmark YAML and then the dataset YAML
+# override it, then any `--set key=value` on the command line.
+
+cache_dir: cache          # window tables, optical flow, poses, CNN frames  (safe to delete)
+results_dir: results      # one sub-folder per dataset, one per run
+
+resources:                # keep the laptop usable while a benchmark runs
+  n_jobs: 2               # CPU cores for Random Forest / selection / BLAS (raise on a server)
+  torch_threads: 2        # CPU threads for PyTorch
+  device: auto            # auto (GPU if present) | cpu  (cpu = never touch the GPU)
+  gpu_batch: 4            # frames per pose-model call on the GPU
+  gpu_memory_fraction: 0.5  # cap on the share of GPU memory PyTorch may take (null = no cap)
+
+arc:                      # activity recognition chain (Fig. 7 of the paper)
+  windows: [1, 2, 3]      # window lengths in seconds
+  overlap: 0.5            # 50 % overlap
+  resample_hz: 18         # put every stream on an 18 Hz grid (paper); or "native"
+  features: null          # null = all 18; or a subset, e.g. [mean, std, max, min]
+  min_coverage: 0.5       # a stream needs samples over >= 50 % of the window, else NaN
+  tasks: [multiclass]     # multiclass (all activity labels) and/or binary (fall vs. not fall)
+
+selection:                # Sec. 5.3, see upfall_bench/arc/selection.py
+  enabled: true
+  scope: global           # global = once on all windows (paper) | per_split = on each training set
+  methods: [cfs, correlation, relieff, oneattr_tree, mutual_info]
+  top_k: 100
+  min_votes: 2
+  max_features: 80        # length of the incremental curve
+  curve_step: 1
+  cv_folds: 3
+  scoring: accuracy       # metric of the incremental curve: accuracy (paper) | f1_macro (better for imbalance)
+  tolerance: 0.005       # keep the smallest k within 0.5 accuracy points of the best k
+  fixed_k: null           # set an integer to skip the curve and keep the first k features
+  max_samples: 3000       # stratified subsample used for ranking + curve (speed)
+
+preprocessing:
+  scaler: none            # none (paper) | standard | minmax
+
+models:                   # Table 12; {} = paper parameters, add keys to override
+  RF: {}
+  SVM: {}
+  MLP: {}
+  KNN: {}
+
+evaluation:
+  protocol: holdout       # holdout | kfold | group_holdout | loso
+  rounds: 10
+  test_size: 0.3
+  folds: 10
+  seed: 0
+
+flow:                     # optical flow -> 20x20 magnitude vector per frame (CAM modality)
+  method: horn_schunck    # horn_schunck (paper) | farneback
+  work_size: [160, 120]   # [640, 480] for full paper fidelity (slower)
+  grid: [20, 20]
+  alpha: 1.0
+  iterations: 10
+  margin_s: 2.0
+
+pose:                     # skeleton extraction from video (SKELETON modality)
+  backend: torchvision    # torchvision (Keypoint R-CNN, COCO 2D) | mediapipe (BlazePose 3D)
+  layout: coco17          # coco17 | body12 (no face joints)
+  min_score: 0.5          # GPU batch size: resources.gpu_batch
+  fps: null               # null = dataset video rate
+  frame_size: null        # e.g. [640, 360] to downscale before detection
+  margin_s: 1.0
+
+cnn:                      # Sec. 5.6 / Fig. 17
+  task: multiclass
+  cameras: null           # null = first camera
+  input_size: [28, 28]
+  fps: null
+  epochs: 5
+  batch_size: 100
+  lr: 0.001
+  momentum: 0.9
+  l2: 0.004
+  folds: 5
+  split: holdout          # holdout (paper) | group_holdout
+
+skeleton:                 # Koffi et al. 2024 3D-skeleton benchmark
+  stream: "*"             # which SKELETON streams (glob on stream name, e.g. "cam1_pose")
+  label: class            # class | fall | impact
+  threshold_g: 2.0        # impact labelling
+  impact_ms: 500
+  normalize: none         # none | hip_center
+  split: frames           # frames (paper) | recording | subject
+  test_size: 0.2
+  rounds: 5
+  scaler: standard        # not stated by Koffi et al.; unscaled SVM/MLP collapse to one class
+  ml_models: [SVM, MLP, RF, KNN, NB, SGD]
+  dl_models: [LSTM, BiLSTM, CNN, STGCN]
+  seq_len: 30
+  seq_stride: 5
+  seq_label: last         # last | any | mode
+  epochs: 30
+  batch_size: 32
+  lr: 0.001
+  class_weights: true

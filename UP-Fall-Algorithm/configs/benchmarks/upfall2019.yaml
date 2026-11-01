@@ -1,0 +1,18 @@
+# Faithful replication of the UP-Fall benchmark (Martinez-Villasenor et al., Sensors 2019).
+# Sec. 5.2: 1/2/3 s windows, 50 % overlap, 12 temporal + 6 frequency features
+# Sec. 5.3: 5-method feature selection + incremental Random-Forest analysis
+# Sec. 5.4: RF / SVM / MLP / kNN with Table 12 parameters, 10 rounds of random 70/30 splits
+arc:
+  windows: [1, 2, 3]
+  overlap: 0.5
+  resample_hz: 18
+  tasks: [multiclass, binary]   # the paper reports multiclass; binary (fall vs. rest) is added
+selection:
+  scope: global
+preprocessing:
+  scaler: none
+models: {RF: {}, SVM: {}, MLP: {}, KNN: {}}
+evaluation:
+  protocol: holdout
+  rounds: 10
+  test_size: 0.3

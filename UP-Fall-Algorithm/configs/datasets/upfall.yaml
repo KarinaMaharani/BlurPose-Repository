@@ -1,0 +1,17 @@
+# Original UP-Fall consolidated dataset (https://sites.google.com/up.edu.mx/har-up/).
+# Download "Consolidated dataset" CSVs (+ camera zips for CAM) into data/upfall/.
+# Running this reproduces Tables 13-14 of the paper with the same code you use on new data.
+dataset:
+  adapter: upfall
+  name: upfall
+  root: data/upfall
+  imu_include_luminosity: true
+
+experiments:                  # the 7 experiments of Sec. 4
+  IR: [IR]
+  IMU: [IMU]
+  IMU+EEG: [IMU, EEG]
+  IR+IMU+EEG: [IR, IMU, EEG]
+  CAM: [CAM]
+  IR+CAM: [IR, CAM]
+  IMU+EEG+CAM: [IMU, EEG, CAM]

@@ -1,0 +1,10 @@
+# Improved 3D-skeleton UP-Fall (Koffi et al. 2024). Copy the SUBJECT*.zip files of the
+# 3D_skeletons-UP-Fall-Dataset repo into data/upfall_skeleton/ (no need to unzip).
+dataset:
+  adapter: upfall_skeleton
+  name: upfall_skeleton
+  root: data/upfall_skeleton
+  fps: 18
+
+experiments:
+  SKELETON: [SKELETON]

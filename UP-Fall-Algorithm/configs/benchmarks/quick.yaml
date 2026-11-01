@@ -1,0 +1,16 @@
+# Fast sanity run (minutes, not hours): one window size, 2 rounds, short selection curve.
+arc:
+  windows: [2]
+  tasks: [multiclass, binary]
+selection:
+  max_features: 30
+  curve_step: 3
+  max_samples: 1500
+evaluation:
+  rounds: 2
+cnn:
+  epochs: 2
+  folds: 2
+skeleton:
+  rounds: 1
+  epochs: 3

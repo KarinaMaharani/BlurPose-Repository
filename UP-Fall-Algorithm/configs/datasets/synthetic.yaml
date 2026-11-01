@@ -1,0 +1,12 @@
+# Fake data with the UP-Fall structure, to test the pipeline without downloading anything.
+dataset:
+  adapter: synthetic
+  name: synthetic
+  subjects_n: 4
+  trials: 3
+  seed: 0
+
+experiments:
+  IMU: [IMU]
+  SKELETON: [SKELETON]
+  IMU+SKELETON: [IMU, SKELETON]

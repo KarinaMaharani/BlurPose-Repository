@@ -1,0 +1,19 @@
+# Copy to configs/datasets/<my_dataset>.yaml
+dataset:
+  adapter: my_dataset          # registered name, or "upfall_bench/datasets/my_dataset.py:MyDatasetAdapter"
+  name: my_dataset             # used for cache/ and results/ folder names
+  root: data/my_dataset
+  fall_classes: [1]            # label ids that are falls (binary task)
+  classes: {1: fall, 2: walk, 3: sit}
+  # subjects: [1, 2]           # optional: only use these subjects
+  # drop_streams: [wrist]      # optional: ignore some streams
+  # ...any other key here is available to your adapter as self.dcfg[...]
+
+# name: list of modality tags, stream names or globs on stream names
+experiments:
+  IMU: [IMU]
+  CAM: [CAM]
+  IMU+CAM: [IMU, CAM]
+
+# Benchmark settings may also be overridden here, e.g.
+# arc: {resample_hz: native}
