@@ -9,7 +9,8 @@ resources:                # keep the laptop usable while a benchmark runs
   torch_threads: 2        # CPU threads for PyTorch
   device: auto            # auto (GPU if present) | cpu  (cpu = never touch the GPU)
   gpu_batch: 4            # frames per pose-model call on the GPU
-  gpu_memory_fraction: 0.5  # cap on the share of GPU memory PyTorch may take (null = no cap)
+  gpu_memory_fraction: null # cap on the share of GPU memory PyTorch may take. null = no cap.
+                            # A cap of 0.5 crashed pose extraction on the server (segfault), so it's off.
 
 arc:                      # activity recognition chain (Fig. 7 of the paper)
   windows: [1, 2, 3]      # window lengths in seconds

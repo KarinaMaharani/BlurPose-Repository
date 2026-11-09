@@ -1,0 +1,13 @@
+# FAMS dataset: same protocol, labels and experiments as ra_pak_edy.yaml, different files.
+# Expects the FAMS zips (or their extracted folders) under data/fams/.
+extends: ra_pak_edy.yaml
+
+dataset:
+  name: fams
+  root: data/fams
+  # All four cameras. Sessions without a camera start time (SF16) or without video are skipped
+  # automatically; pose runs at 5 frames per second to keep the GPU time reasonable.
+  cameras: [cam1, cam2, cam3, cam4]
+
+pose:
+  fps: 5                     # pose on 5 frames per second instead of the video rate

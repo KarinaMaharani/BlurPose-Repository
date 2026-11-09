@@ -1,40 +1,65 @@
 # Running UP-Fall-Algorithm on the GPU server (rsync + tmux)
 
-Server: `karina@152.118.31.34`, SSH port `51022`. See `../SSH_GUIDE.md` for key login and the
-`ssh gpu` shortcut. `[laptop]` commands run in **Git Bash** from the `UP-Fall-Algorithm/`
-folder; `[server]` commands run after `ssh`.
+Server: `karina@152.118.31.34`, SSH port `51022`. See `../SSH_GUIDE.md` for key login.
+`[laptop]` commands run in **WSL** (it has rsync; Git Bash does not). `[server]` commands run
+after `ssh`.
 
-## 0. rsync on the laptop (one time)
+> **Keep the `cd ... &&` at the start of each laptop command.** In rsync, `./` means "the
+> current folder". Run from the wrong folder, it uploads that whole folder, e.g. your entire
+> `C:\Users\Karina M`. With `&&`, nothing is sent if the `cd` fails. To preview a transfer,
+> add `-n` (dry run) to the rsync command.
 
-Git Bash does not include rsync. Pick one:
+## Using a vast.ai machine instead
 
-* **Chocolatey** (already on this laptop), in an *administrator* PowerShell:
-  `choco install rsync -y`, then open a new Git Bash.
-* **No rsync:** use the `scp` lines given below each rsync line. `scp` cannot resume, so
-  send large data as one zip.
+Every command in this guide works with two swaps: `ssh -p 51022` → `ssh -p 30713` and
+`karina@152.118.31.34` → `root@ssh1.vast.ai`. The port and host change whenever you rent a
+new instance. The `-L 8080:localhost:8080` part is only a tunnel for web pages, so rsync
+doesn't need it.
 
-## 1. Send the code (re-run after every code change, only changed files go)
+* **Disk:** the instance checked on 2026-11-05 has only 16 GB. If you only use `run`, skip
+  PyTorch (several GB):
+  `pip install numpy pandas scipy scikit-learn matplotlib pyyaml tqdm opencv-python-headless imageio-ffmpeg`
+* **You pay while it runs, and the files live on the instance:** bring `results/` back (step 5)
+  before you destroy it.
+* **tmux:** use `tmux new -A -s upfall`. If it says "sessions should be nested", you are
+  already inside tmux, so just run your commands.
+
+## 1. Send the code (270 KB, seconds; re-run after every code change)
 
 ```bash
-# [laptop]
-ssh -p 51022 karina@152.118.31.34 "mkdir -p ~/upfall/data"
-rsync -avP -e "ssh -p 51022" --exclude data/ --exclude cache/ --exclude results/ --exclude __pycache__/ ./ karina@152.118.31.34:~/upfall/
-# without rsync:
-scp -P 51022 -r upfall_bench configs tests requirements.txt README.md karina@152.118.31.34:~/upfall/
+# [laptop, WSL]
+cd "/mnt/c/.FILES/..MY STUFF/..KARIN/.UI/.SEM 6/skripsi/..RA-Pak-Edy/UP-Fall-Algorithm" && rsync -avP -e "ssh -p 51022" --exclude data/ --exclude cache/ --exclude results/ --exclude __pycache__/ ./ karina@152.118.31.34:~/upfall/
 ```
 
 ## 2. Send the data
 
-The session exports are already zips, so send the zips and unzip them on the server.
+Upload from the laptop was measured at about 100 kB/s (0.36 GB/hour), so size matters. Choose
+one option per session. rsync only creates the last folder of a path, so make the parents first:
 
 ```bash
-# [laptop] your sessions
-rsync -avP -e "ssh -p 51022" "/c/Users/Karina M/Downloads/francis_sesi_sore_1788601010155.zip" karina@152.118.31.34:~/upfall/data/
-# without rsync:
-scp -P 51022 "/c/Users/Karina M/Downloads/francis_sesi_sore_1788601010155.zip" karina@152.118.31.34:~/upfall/data/
+# [laptop, WSL] one time
+ssh -p 51022 karina@152.118.31.34 "mkdir -p ~/upfall/data ~/upfall/cache/ra_pak_edy"
+```
 
-# [laptop] UP-Fall skeleton release (small)
-rsync -avP -e "ssh -p 51022" data/upfall_skeleton/ karina@152.118.31.34:~/upfall/data/upfall_skeleton/
+**Option A: IMU + cached optical flow, no videos (about 115 MB, roughly 20 min).** Enough for
+`run` with the IMU and CAM experiments. Not enough for `extract-pose` or `cnn`, so in step 4
+use only `inspect` and `run` for this dataset.
+
+```bash
+# [laptop, WSL] IMU CSVs + metadata (-z compresses the CSVs in transit)
+cd "/mnt/c/.FILES/..MY STUFF/..KARIN/.UI/.SEM 6/skripsi/..RA-Pak-Edy/UP-Fall-Algorithm" && rsync -avPz -e "ssh -p 51022" --exclude videos/ --exclude '*_sensor_data*' --exclude '[0-9]*[0-9]_consolidated.csv' data/ra_pak_edy/ karina@152.118.31.34:~/upfall/data/ra_pak_edy/
+# [laptop, WSL] cached optical flow of those cameras
+cd "/mnt/c/.FILES/..MY STUFF/..KARIN/.UI/.SEM 6/skripsi/..RA-Pak-Edy/UP-Fall-Algorithm" && rsync -avP -e "ssh -p 51022" cache/ra_pak_edy/derived/ karina@152.118.31.34:~/upfall/cache/ra_pak_edy/derived/
+```
+
+**Option B: the full session with videos (1.1 GB, about 3 hours at that speed).** Needed for
+`extract-pose` and `cnn`. Faster route if you have a cloud link: upload the zip to Google Drive
+or similar from a better connection, then download it on the server. Otherwise:
+
+```bash
+# [laptop, WSL] start inside tmux so closing the terminal doesn't stop it; if it breaks,
+# run the same command again and rsync resumes the partial file
+rsync -avP -e "ssh -p 51022" "/mnt/c/Users/Karina M/Downloads/francis_sesi_sore_1788601010155.zip" karina@152.118.31.34:~/upfall/data/
 ```
 
 ```bash
@@ -43,6 +68,13 @@ cd ~/upfall/data
 mkdir -p ra_pak_edy/francis_sesi_sore
 unzip -q francis_sesi_sore_1788601010155.zip -d ra_pak_edy/francis_sesi_sore -x 'data/recovery/*'
 rm francis_sesi_sore_1788601010155.zip
+```
+
+**UP-Fall skeleton release (4 MB):**
+
+```bash
+# [laptop, WSL]
+cd "/mnt/c/.FILES/..MY STUFF/..KARIN/.UI/.SEM 6/skripsi/..RA-Pak-Edy/UP-Fall-Algorithm" && rsync -avP -e "ssh -p 51022" data/upfall_skeleton/ karina@152.118.31.34:~/upfall/data/upfall_skeleton/
 ```
 
 UR Fall is faster to download straight onto the server than to copy:
@@ -110,10 +142,8 @@ start it with `bash run_all.sh 2>&1 | tee -a run_all.log` inside tmux.
 Results are small (tables, PNGs, CSVs). Leave `cache/` on the server.
 
 ```bash
-# [laptop]
-rsync -avP -e "ssh -p 51022" karina@152.118.31.34:~/upfall/results/ ./results/
-# without rsync:
-scp -P 51022 -r karina@152.118.31.34:~/upfall/results ./results_server
+# [laptop, WSL]
+cd "/mnt/c/.FILES/..MY STUFF/..KARIN/.UI/.SEM 6/skripsi/..RA-Pak-Edy/UP-Fall-Algorithm" && rsync -avP -e "ssh -p 51022" karina@152.118.31.34:~/upfall/results/ ./results/
 ```
 
 Open `results/<dataset>/<run>/results.md`.

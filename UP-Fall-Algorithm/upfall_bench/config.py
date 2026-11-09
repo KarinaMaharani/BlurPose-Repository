@@ -47,10 +47,22 @@ def apply_overrides(cfg: dict, overrides: list[str] | None) -> dict:
 
 def load_config(dataset: str | Path, benchmark: str | Path | None = None,
                 overrides: list[str] | None = None) -> dict:
+    """defaults <- benchmark <- dataset (after its ``extends`` base) <- --set overrides.
+
+    A dataset file may start with ``extends: other.yaml`` to reuse another dataset file
+    (same protocol, labels and experiments) and change only what differs, e.g. the root.
+    """
     cfg = load_yaml(PROJECT_ROOT / "configs" / "benchmarks" / "defaults.yaml")
     if benchmark:
         cfg = deep_merge(cfg, load_yaml(benchmark))
-    cfg = deep_merge(cfg, load_yaml(dataset))      # dataset file may override benchmark defaults
+    ds = load_yaml(dataset)
+    base = ds.pop("extends", None)
+    if base:
+        base_path = Path(dataset).parent / base
+        if not base_path.exists():
+            base_path = PROJECT_ROOT / "configs" / "datasets" / base
+        cfg = deep_merge(cfg, load_yaml(base_path))
+    cfg = deep_merge(cfg, ds)                      # dataset file may override benchmark defaults
     return apply_overrides(cfg, overrides)
 
 

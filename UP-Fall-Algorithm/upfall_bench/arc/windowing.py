@@ -31,7 +31,7 @@ def _uniform(stream, rate):
 
 
 def recording_windows(rec: Recording, win_s: float, overlap: float, resample, fall_classes: set,
-                      which_feats=None, min_coverage=0.5) -> pd.DataFrame:
+                      which_feats=None, min_coverage=0.5, skip_labels=()) -> pd.DataFrame:
     win = win_s * 1000.0
     step = win * (1 - overlap)
     t0, t1 = rec.span_ms
@@ -68,7 +68,10 @@ def recording_windows(rec: Recording, win_s: float, overlap: float, resample, fa
     meta = pd.DataFrame({"rid": rec.rid, "subject": str(rec.subject), "activity": rec.activity,
                          "trial": rec.trial, "t0_ms": starts, "label": labels.astype(int),
                          "fall": np.isin(labels, list(fall_classes)).astype(int)})
-    return pd.concat([meta, pd.DataFrame(cols)], axis=1)
+    out = pd.concat([meta, pd.DataFrame(cols)], axis=1)
+    if len(skip_labels):
+        out = out[~out["label"].isin(list(skip_labels))]
+    return out
 
 
 def stream_modalities(recs) -> dict[str, str]:
@@ -84,18 +87,26 @@ def build_windows(recs, adapter, cfg: dict, win_s: float, rebuild: bool = False)
     overlap, resample = float(a.get("overlap", .5)), a.get("resample_hz", 18)
     feats, cov = a.get("features"), float(a.get("min_coverage", .5))
     sig = json.dumps(dict(win=win_s, ov=overlap, rs=resample, f=feats, cov=cov, fc=sorted(adapter.fall_classes),
-                          recs=[(r.rid, sorted((s.name, len(s.t_ms)) for s in r.streams.values())) for r in recs]),
+                          skip=sorted(adapter.skip_labels),
+                     recs=[(r.rid, sorted((s.name, len(s.t_ms)) for s in r.streams.values())) for r in recs]),
                      default=str)
     key = hashlib.md5(sig.encode()).hexdigest()[:10]
     path = Path(adapter.cache_dir) / "windows" / f"win{win_s:g}s_ov{overlap:g}_rs{resample}_{key}.pkl"
     if path.exists() and not rebuild:
-        return pd.read_pickle(path)
-    parts = [recording_windows(r, win_s, overlap, resample, adapter.fall_classes, feats, cov)
+        try:
+            return pd.read_pickle(path)
+        except Exception as e:      # cut off by an interrupted run: rebuild it
+            print(f"  WARNING: rebuilding unreadable window cache {path.name} ({e})", flush=True)
+            path.unlink()
+    parts = [recording_windows(r, win_s, overlap, resample, adapter.fall_classes, feats, cov, adapter.skip_labels)
              for r in tqdm(recs, desc=f"windows {win_s:g}s", unit="rec", mininterval=2)]
     df = pd.concat([p for p in parts if len(p)], ignore_index=True)
     df.attrs["stream_modality"] = stream_modalities(recs)
     path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_pickle(path)
+    import os
+    tmp = path.with_name(path.stem + ".partial.pkl")       # rename at the end: no half-written cache
+    df.to_pickle(tmp)
+    os.replace(tmp, path)
     return df
 
 

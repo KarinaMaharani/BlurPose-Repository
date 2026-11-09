@@ -12,6 +12,10 @@ later, at windowing time.
 """
 from __future__ import annotations
 
+import os
+import shutil
+from pathlib import Path
+
 import numpy as np
 from tqdm import tqdm
 
@@ -81,19 +85,47 @@ def extract_pose(adapter, recs, cfg: dict, overwrite: bool = False):
         if out.exists() and not overwrite:
             print(f"  pose cached: {out.name}")
             continue
-        ts, rows, buf, bt = [], [], [], []
+        # Progress is saved in small chunks, so a crash (the GPU model sometimes segfaults on long
+        # videos) only loses the last chunk: the next try resumes after the last saved frame.
+        chunks = adapter.cache_dir / "derived" / "pose_chunks" / f"{cam}__{Path(src.path).stem}"
+        chunks.mkdir(parents=True, exist_ok=True)
+        def last_t(c):
+            with np.load(c) as z:
+                return float(z["t"][-1])
+        done_t = max((last_t(c) for c in chunks.glob("*.npz")), default=-np.inf)
+        if done_t > -np.inf:
+            print(f"  resuming {src.path.name} after {done_t / 1000:.1f} s", flush=True)
         size = tuple(pcfg["frame_size"]) if pcfg.get("frame_size") else None
+        buf, bt = [], []
+
+        def flush():
+            if not buf:
+                return
+            v = model(buf)
+            name = f"{len(list(chunks.glob('*.npz'))):06d}.npz"
+            tmp = chunks / f"{name}.tmp"              # not *.npz until complete
+            with open(tmp, "wb") as f:
+                np.savez(f, t=np.array(bt, np.float64), v=v)
+            os.replace(tmp, chunks / name)
+            buf.clear(); bt.clear()
+
         for t, frame in tqdm(iter_frames(src, size=size, fps=fps), desc=f"pose {cam} {src.path.name}",
                              unit="f", mininterval=2):
-            if not in_spans(t, spans, margin):
+            if t <= done_t or not in_spans(t, spans, margin):
                 continue
             buf.append(frame)
             bt.append(t)
             if len(buf) >= 64:
-                rows.append(model(buf)); ts += bt; buf, bt = [], []
-        if buf:
-            rows.append(model(buf)); ts += bt
-        if not ts:
+                flush()
+        flush()
+        files = sorted(chunks.glob("*.npz"))
+        if not files:
             continue
-        save_derived(out, ts, np.concatenate(rows), channels, "SKELETON", "signal")
+        ts, vals = [], []
+        for c in files:
+            with np.load(c) as z:
+                ts.append(z["t"]); vals.append(z["v"])
+        ts, vals = np.concatenate(ts), np.concatenate(vals)
+        save_derived(out, ts, vals, channels, "SKELETON", "signal")
+        shutil.rmtree(chunks)
         print(f"  saved {len(ts)} skeletons -> {out}")

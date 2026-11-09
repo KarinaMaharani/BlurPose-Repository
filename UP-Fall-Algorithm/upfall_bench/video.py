@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import zipfile
+from pathlib import Path
 from typing import Iterator, Optional
 
 import numpy as np
@@ -114,6 +115,8 @@ def unique_videos(recs) -> dict:
     out = {}
     for r in recs:
         for cam, v in r.videos.items():
+            if not Path(v.path).exists():
+                continue
             key = (cam, str(v.path))
             out.setdefault(key, (v, []))[1].append(r.span_ms)
     return out

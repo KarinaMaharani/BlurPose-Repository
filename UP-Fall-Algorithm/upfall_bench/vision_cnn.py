@@ -31,8 +31,10 @@ def build_frames(adapter, recs, cfg):
     by_video = {}
     for r in recs:
         for cam in cams:
-            if cam in r.videos:
+            if cam in r.videos and Path(r.videos[cam].path).exists():
                 by_video.setdefault((cam, str(r.videos[cam].path)), (r.videos[cam], []))[1].append(r)
+    if not by_video:
+        raise FileNotFoundError(f"cnn needs the video files of {cams}, none found under {adapter.root}")
     X, y, rid, subj, fall = [], [], [], [], []
     fc = adapter.fall_classes
     for (cam, _), (src, rs) in by_video.items():

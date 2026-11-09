@@ -12,21 +12,18 @@ Layout expected under ``root`` (exactly what ``python -m upfall_bench download``
 * ``urfall-cam0-*.csv``: per depth frame: seq, frame, posture label (-1 not lying, 0 falling,
   1 lying) and 8 depth-silhouette features.
 
-Classes. UR Fall only gives posture per frame, so we derive five classes that keep falls and
-intentional lying-down (an ADL) apart:
+Classes, following the dataset page. The page says the posture label 0 ("temporary pose
+while falling") is not used in classification, so those frames are skipped. Remaining labels:
 
     1 upright            (-1 in any sequence)
-    2 falling            ( 0 in a fall sequence)   <- fall class by default
-    3 lying after fall   ( 1 in a fall sequence)
-    4 lying down (ADL)   ( 0 in an ADL sequence)
-    5 lying (ADL)        ( 1 in an ADL sequence)
+    3 lying after fall   ( 1 in a fall sequence)   <- fall class (positive) by default
+    5 lying (ADL)        ( 1 in an ADL sequence)   <- not a fall
 
-Use ``fall_classes: [2, 3]`` in the YAML if "on the floor after a fall" should also count.
+The binary task is therefore: lying after a fall (3) vs. upright (1) and lying in ADLs (5).
 """
 from __future__ import annotations
 
 import urllib.request
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -38,16 +35,18 @@ BASE_URL = "https://fenix.ur.edu.pl/mkepski/ds/data/"
 N_FALL, N_ADL = 30, 40
 DEPTH_FEATURES = ["HeightWidthRatio", "MajorMinorRatio", "BoundingBoxOccupancy", "MaxStdXZ",
                   "HHmaxRatio", "H", "D", "P40"]
+# (posture label, is fall sequence) -> class id; posture 0 maps to the skipped class 0
+CODE = {(-1, True): 1, (1, True): 3, (0, True): 0, (-1, False): 1, (1, False): 5, (0, False): 0}
 
 
 @register("urfall")
 class URFallAdapter(DatasetAdapter):
 
     def default_classes(self):
-        return {1: "upright", 2: "falling", 3: "lying after fall", 4: "lying down (ADL)", 5: "lying (ADL)"}
+        return {1: "upright", 3: "lying after fall", 5: "lying (ADL)"}
 
     def default_fall_classes(self):
-        return {2}
+        return {3}
 
     # ------------------------------------------------------------------------------------
     def download(self):
@@ -98,8 +97,7 @@ class URFallAdapter(DatasetAdapter):
             f = by_seq[seq]
             f = f[f.frame.isin(frame_t)]
             t_lab = f.frame.map(frame_t).to_numpy(float)
-            code = {(-1, True): 1, (0, True): 2, (1, True): 3, (-1, False): 1, (0, False): 4, (1, False): 5}
-            labels = np.array([code[(int(p), is_fall)] for p in f.posture])
+            labels = np.array([CODE[(int(p), is_fall)] for p in f.posture])
 
             rec = Recording(rid=seq, subject=self.dcfg.get("subject_name", "urfd"),
                             activity=1 if is_fall else 2, trial=int(seq.split("-")[1]),

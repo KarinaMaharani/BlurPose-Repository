@@ -89,6 +89,11 @@ class DatasetAdapter:
         fc = self.dcfg.get("fall_classes")
         return {int(x) for x in fc} if fc is not None else set(self.default_fall_classes())
 
+    @property
+    def skip_labels(self) -> set[int]:
+        """Labels whose windows are left out of every experiment (e.g. UR Fall's transition frames)."""
+        return {int(x) for x in (self.dcfg.get("skip_labels") or [])}
+
     def recordings(self, with_derived: bool = True) -> list[Recording]:
         recs = self.load_recordings()
         keep_subj = self.dcfg.get("subjects")
@@ -121,7 +126,12 @@ class DatasetAdapter:
                     p = self.derived_path(kind, cam, vid.path)
                     if not p.exists():
                         continue
-                    t, v, ch, modality, skind = _load_npz(str(p))
+                    try:
+                        t, v, ch, modality, skind = _load_npz(str(p))
+                    except Exception as e:      # cut off by an interrupted run: remove, recompute later
+                        print(f"  WARNING: removing unreadable cache file {p.name} ({e})", flush=True)
+                        p.unlink()
+                        continue
                     m = (t >= t0 - 1000) & (t <= t1 + 1000)
                     if m.sum() == 0:
                         continue
@@ -147,7 +157,11 @@ def _load_npz(path: str):
 
 
 def save_derived(path: Path, t_ms, values, channels, modality: str, kind: str):
+    """Write to a temporary file, then rename: an interrupted run never leaves a cut-off cache file."""
+    import os
     path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(path, t_ms=np.asarray(t_ms, np.float64), values=np.asarray(values, np.float32),
+    tmp = path.with_name(path.stem + ".partial.npz")
+    np.savez_compressed(tmp, t_ms=np.asarray(t_ms, np.float64), values=np.asarray(values, np.float32),
                         channels=np.asarray(channels), modality=modality, kind=kind)
+    os.replace(tmp, path)
     _load_npz.cache_clear()

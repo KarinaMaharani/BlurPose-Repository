@@ -16,11 +16,49 @@ dataset:
   camera_rotate: {cam4: cw}    # cam4 was filmed sideways
   video_fps: 18                # decode rate for optical flow / CNN (UP-Fall cameras ran at ~18 fps)
 
-  # >>> FILL IN from your protocol sheet. Run `inspect` to see per-label durations and
-  # >>> acceleration peaks (falls typically peak > 2-3 g).
-  fall_classes: []             # e.g. [1, 2, 3, 4, 5]
-  classes: {}                  # optional names, e.g. {1: "fall forward", 6: "walking", ...}
-  label_to_activity: {}        # optional: merge raw labels, e.g. {1: 1, 2: 1, 3: 1} if 1-3 are trials of one fall
+  # Protocol: last table ("Anotasi", "Ket.") of the RSUI informed-consent form.
+  # Multiclass task = all labels below. Binary task = fall_classes vs. every other label.
+  fall_classes: [2, 4, 6, 8, 10, 14, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+  classes:
+    1: "Berdiri tegak sembari melakukan aktifitas"         # ADL
+    2: "Jatuh ke depan"                                    # FALL
+    3: "Tidur di matras"                                   # ADL
+    4: "Jatuh ke belakang"                                 # FALL
+    5: "Near Fall"                                         # ADL
+    6: "Jatuh ke depan dengan dorongan"                    # FALL
+    7: "Berjalan"                                          # ADL
+    8: "Jatuh ke belakang dengan dorongan"                 # FALL
+    9: "Merangkak"                                         # ADL
+    10: "Jatuh ke kiri"                                    # FALL
+    11: "Duduk di kursi secara perlahan"                   # ADL
+    12: "Berlari kecil"                                    # ADL
+    13: "Duduk di atas matras"                             # ADL
+    14: "Jatuh ke kanan"                                   # FALL
+    15: "Melompat"                                         # ADL
+    16: "Berdiri dari kursi dan jatuh ke depan"            # FALL
+    17: "Berdiri dari kursi dan jatuh ke samping kiri"     # FALL
+    18: "Berdiri dari kursi dan jatuh ke samping kanan"    # FALL
+    19: "Duduk dan jatuh"                                  # FALL
+    20: "Bangun dari matras"                               # ADL
+    21: "Berjalan dan jatuh ke depan"                      # FALL
+    22: "Berjalan dan jatuh ke samping kiri"               # FALL
+    23: "Berjalan dan jatuh ke samping kanan"              # FALL
+    24: "Berjalan dan jatuh ke belakang"                   # FALL
+    25: "Jatuh ke depan dan bangun kembali"                # FALL
+    26: "Jatuh ke belakang dan bangun kembali"             # FALL
+    27: "Jatuh ke kiri dan bangun kembali"                 # FALL
+    28: "Jatuh ke kanan dan bangun kembali"                # FALL
+    29: "Berdiri, duduk, dan jatuh ke depan"               # FALL
+    30: "Berdiri, duduk, dan jatuh ke kiri"                # FALL
+    31: "Berdiri, duduk, dan jatuh ke kanan"               # FALL
+    32: "Berdiri, duduk, dan jatuh ke belakang"            # FALL
+    33: "Berjalan cepat"                                   # ADL
+    34: "Duduk di kursi dengan cepat"                      # ADL
+    35: "Menaiki tangga perlahan"                          # ADL
+    36: "Menuruni tangga perlahan"                         # ADL
+    37: "Menaiki tangga dengan cepat"                      # ADL
+    38: "Menuruni tangga dengan cepat"                     # ADL
+  label_to_activity: {}        # optional: merge raw labels, e.g. {25: 2} to treat 25 as label 2
   skip_labels: []              # labels to ignore entirely
 
 experiments:

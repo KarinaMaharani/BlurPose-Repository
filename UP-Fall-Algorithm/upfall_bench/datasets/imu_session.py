@@ -101,11 +101,14 @@ class IMUSessionAdapter(DatasetAdapter):
         for c in cams_json.get("cameras", []):
             if d.get("cameras") and c["cam_id"] not in d["cameras"]:
                 continue
-            vp = folder / c["file"]
-            if vp.exists():
-                videos[c["cam_id"]] = VideoSource(c["cam_id"], vp, t0_ms=float(c["started_at_ms"]),
-                                                  fps=float(d.get("video_fps", 18)),
-                                                  rotate=(d.get("camera_rotate") or {}).get(c["cam_id"]))
+            if "started_at_ms" not in c or "file" not in c:
+                print(f"  WARNING [{folder.name}] camera {c.get('cam_id')} has no start time in cameras.json, "
+                      f"skipped (its optical flow/pose cannot be aligned)", flush=True)
+                continue
+            # kept even if the file is gone: cached flow/pose attach by path, without the video
+            videos[c["cam_id"]] = VideoSource(c["cam_id"], folder / c["file"], t0_ms=float(c["started_at_ms"]),
+                                              fps=float(d.get("video_fps", 18)),
+                                              rotate=(d.get("camera_rotate") or {}).get(c["cam_id"]))
 
         recs, seen = [], defaultdict(int)
         for t0, t1, lab in zip(lt, lt_end, lv):
